@@ -1,5 +1,3 @@
-[![Build Status](https://travis-ci.org/Acosix/alfresco-deauth.svg?branch=master)](https://travis-ci.org/Acosix/alfresco-deauth)
-
 # About
 
 This addon aims to provide functionality to simplify deauthorisation of users so Alfresco Enterprise Edition customers can reduce the effort to comply with their specific subscription terms and keep user counts within the allowed range.
@@ -40,6 +38,8 @@ This addon is being built using the [Acosix Alfresco Maven framework](https://gi
 ## Build
 
 This project can be build simply by executing the standard Maven build lifecycles for package, install or deploy depending on the intent for further processing. A Java Development Kit (JDK) version 8 or higher is required for the build.
+
+Note: This project does not provide a Travis CI build status since it relies on Alfresco Enterprise artifacts which cannot be resolved by Travis CI without adding customer-specific information to retrieve them from the private Alfresco artifact server.
 
 ## Dependency in Alfresco SDK
 
