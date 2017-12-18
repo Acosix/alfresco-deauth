@@ -1,0 +1,318 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>de.acosix.alfresco.maven</groupId>
+        <artifactId>de.acosix.alfresco.maven.module.parent</artifactId>
+        <version>1.0.0.3</version>
+    </parent>
+
+    <groupId>de.acosix.alfresco.deauth</groupId>
+    <artifactId>de.acosix.alfresco.deauth.repo</artifactId>
+    <version>1.0.0.0-SNAPSHOT</version>
+    <packaging>jar</packaging>
+
+    <name>Acosix Alfresco Deauthorisation - Repository Module</name>
+    <description>Addon to add utilities for user deauthorisation</description>
+
+    <developers>
+        <developer>
+            <id>AFaust</id>
+            <name>Axel Faust</name>
+            <email>axel.faust@acosix.de</email>
+            <organization>Acosix GmbH</organization>
+            <roles>
+                <role>Founder</role>
+                <role>Architect</role>
+                <role>Developer</role>
+            </roles>
+            <properties>
+                <twitter>twitter.com/ReluctantBird83</twitter>
+            </properties>
+        </developer>
+    </developers>
+
+    <properties>
+        <messages.path>acosix/deauth</messages.path>
+        <messages.packageId>acosix.deauth</messages.packageId>
+        <moduleId>acosix-deauth</moduleId>
+
+        <alfresco.distribution.version>5.1.1.4</alfresco.distribution.version>
+        <alfresco.authorised-users.version>5.1.1.6</alfresco.authorised-users.version>
+        <acosix.audit.version>1.0.0.0</acosix.audit.version>
+    </properties>
+
+    <repositories>
+        <repository>
+            <id>ossrh</id>
+            <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
+        </repository>
+
+        <repository>
+            <id>alfresco-private</id>
+            <url>https://artifacts.alfresco.com/nexus/content/groups/private</url>
+        </repository>
+    </repositories>
+
+    <dependencyManagement>
+
+        <dependencies>
+            <dependency>
+                <groupId>de.acosix.alfresco.utility</groupId>
+                <artifactId>de.acosix.alfresco.utility.common</artifactId>
+                <version>${acosix.utility.version}</version>
+                <type>jar</type>
+                <scope>provided</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>de.acosix.alfresco.utility</groupId>
+                <artifactId>de.acosix.alfresco.utility.common</artifactId>
+                <version>${acosix.utility.version}</version>
+                <type>jar</type>
+                <scope>test</scope>
+                <classifier>tests</classifier>
+            </dependency>
+
+            <dependency>
+                <groupId>de.acosix.alfresco.utility</groupId>
+                <artifactId>de.acosix.alfresco.utility.repo</artifactId>
+                <version>${acosix.utility.version}</version>
+                <type>jar</type>
+                <scope>provided</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>de.acosix.alfresco.utility</groupId>
+                <artifactId>de.acosix.alfresco.utility.repo</artifactId>
+                <version>${acosix.utility.version}</version>
+                <type>jar</type>
+                <scope>test</scope>
+                <classifier>installable</classifier>
+            </dependency>
+
+            <dependency>
+                <groupId>de.acosix.alfresco.utility</groupId>
+                <artifactId>de.acosix.alfresco.utility.repo</artifactId>
+                <version>${acosix.utility.version}</version>
+                <type>jar</type>
+                <scope>test</scope>
+                <classifier>tests</classifier>
+            </dependency>
+
+            <dependency>
+                <groupId>de.acosix.alfresco.utility</groupId>
+                <artifactId>de.acosix.alfresco.utility.share</artifactId>
+                <version>${acosix.utility.version}</version>
+                <type>jar</type>
+                <scope>provided</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>de.acosix.alfresco.audit</groupId>
+                <artifactId>de.acosix.alfresco.audit.repo</artifactId>
+                <version>${acosix.audit.version}</version>
+                <type>jar</type>
+                <scope>provided</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>de.acosix.alfresco.audit</groupId>
+                <artifactId>de.acosix.alfresco.audit.repo</artifactId>
+                <version>${acosix.audit.version}</version>
+                <type>jar</type>
+                <scope>test</scope>
+                <classifier>installable</classifier>
+            </dependency>
+
+            <dependency>
+                <groupId>de.acosix.alfresco.audit</groupId>
+                <artifactId>de.acosix.alfresco.audit.repo</artifactId>
+                <version>${acosix.audit.version}</version>
+                <type>jar</type>
+                <scope>test</scope>
+                <classifier>tests</classifier>
+            </dependency>
+
+            <dependency>
+                <groupId>de.acosix.alfresco.audit</groupId>
+                <artifactId>de.acosix.alfresco.audit.share</artifactId>
+                <version>${acosix.audit.version}</version>
+                <type>jar</type>
+                <scope>provided</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>org.alfresco.authorization</groupId>
+                <artifactId>alfresco-authorised-users</artifactId>
+                <version>${alfresco.authorised-users.version}</version>
+                <type>jar</type>
+                <scope>provided</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>de.acosix.alfresco.utility</groupId>
+                <artifactId>de.acosix.alfresco.utility.share</artifactId>
+                <version>${acosix.utility.version}</version>
+                <type>jar</type>
+                <scope>test</scope>
+                <classifier>installable</classifier>
+            </dependency>
+
+            <dependency>
+                <groupId>de.acosix.alfresco.utility</groupId>
+                <artifactId>de.acosix.alfresco.utility.share</artifactId>
+                <version>${acosix.utility.version}</version>
+                <type>jar</type>
+                <scope>test</scope>
+                <classifier>tests</classifier>
+            </dependency>
+        </dependencies>
+
+    </dependencyManagement>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.alfresco</groupId>
+            <artifactId>alfresco-repository</artifactId>
+            <!-- can mess with tests using a Servlet 3.0 container -->
+            <exclusions>
+                <exclusion>
+                    <groupId>javax.servlet</groupId>
+                    <artifactId>servlet-api</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.slf4j</groupId>
+                    <artifactId>slf4j-log4j12</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+
+        <dependency>
+            <groupId>de.acosix.alfresco.audit</groupId>
+            <artifactId>de.acosix.alfresco.audit.repo</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.alfresco.authorization</groupId>
+            <artifactId>alfresco-authorised-users</artifactId>
+        </dependency>
+
+    </dependencies>
+
+    <build>
+
+        <resources>
+            <resource>
+                <directory>src/main/resources</directory>
+                <filtering>true</filtering>
+                <excludes>
+                    <exclude>.gitkeep</exclude>
+                </excludes>
+            </resource>
+            <!-- the following are only for mapping source folders in Eclipse -->
+            <resource>
+                <directory>src/main/config</directory>
+                <excludes>
+                    <exclude>**/*</exclude>
+                </excludes>
+            </resource>
+            <resource>
+                <directory>src/main/globalConfig</directory>
+                <excludes>
+                    <exclude>**/*</exclude>
+                </excludes>
+            </resource>
+            <resource>
+                <directory>src/main/messages</directory>
+                <excludes>
+                    <exclude>**/*</exclude>
+                </excludes>
+            </resource>
+            <resource>
+                <directory>src/main/webscripts</directory>
+                <excludes>
+                    <exclude>**/*</exclude>
+                </excludes>
+            </resource>
+            <resource>
+                <directory>src/main/webapp</directory>
+                <excludes>
+                    <exclude>**/*</exclude>
+                </excludes>
+            </resource>
+        </resources>
+        <testResources>
+            <testResource>
+                <directory>src/test/resources</directory>
+                <filtering>true</filtering>
+                <excludes>
+                    <exclude>.gitkeep</exclude>
+                </excludes>
+            </testResource>
+        </testResources>
+
+        <plugins>
+
+            <plugin>
+                <artifactId>maven-enforcer-plugin</artifactId>
+            </plugin>
+
+            <plugin>
+                <artifactId>maven-resources-plugin</artifactId>
+            </plugin>
+
+            <plugin>
+                <artifactId>maven-compiler-plugin</artifactId>
+            </plugin>
+
+            <plugin>
+                <artifactId>maven-source-plugin</artifactId>
+            </plugin>
+
+            <plugin>
+                <artifactId>maven-jar-plugin</artifactId>
+            </plugin>
+
+            <plugin>
+                <artifactId>maven-javadoc-plugin</artifactId>
+            </plugin>
+
+            <plugin>
+                <groupId>de.thetaphi</groupId>
+                <artifactId>forbiddenapis</artifactId>
+            </plugin>
+
+            <plugin>
+                <groupId>de.acosix.alfresco.maven</groupId>
+                <artifactId>de.acosix.alfresco.maven.plugins</artifactId>
+            </plugin>
+
+            <plugin>
+                <groupId>org.alfresco.maven.plugin</groupId>
+                <artifactId>alfresco-maven-plugin</artifactId>
+            </plugin>
+
+            <plugin>
+                <groupId>de.acosix.maven</groupId>
+                <artifactId>jshint-maven-plugin</artifactId>
+            </plugin>
+
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>findbugs-maven-plugin</artifactId>
+            </plugin>
+
+            <plugin>
+                <artifactId>maven-assembly-plugin</artifactId>
+            </plugin>
+
+        </plugins>
+
+    </build>
+</project>
