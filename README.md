@@ -9,13 +9,17 @@ This addon has been built to be compatible with Alfresco Enterprise Edition 5.1+
 ## Features
 
 ### Inactive user deauthorisation
-Based on the (_acosix-audit_ module)[https://github.com/Acosix/alfresco-audit] this addon provides the means to bulk-deauthorise users that have been inactive for a specific duration of time. Inactivity is determined using the same logic as in the Audit-based web scripts to query active / inactive users of the _acosix-audit_ module. The Repository-tier web script at URL _/alfresco/s/acosix/api/deauth/inactiveUsers_ may be called with a POST request to trigger bulk-deauthorisation.
+Based on the (_acosix-audit_ module)[https://github.com/Acosix/alfresco-audit] this addon provides the means to bulk-deauthorise users that have been inactive for a specific duration of time. Inactivity is determined using the same logic as in the Audit-based web scripts to query active / inactive users of the _acosix-audit_ module.
+
+#### Deauthorisation via web script
+The Repository-tier web script at URL _/alfresco/s/acosix/api/deauth/inactiveUsers_ may be called with a POST request to trigger bulk-deauthorisation.
 
 Parameters:
 - lookBackMode - mode/unit for defining the time frame; default value: months, allowed values: days, months, years
 - lookBackAmount - number of units for defining the time frame, default value: 1 (mode=years), 3 (mode=months), 90 (mode=days)
 - workerThreads - the amount of parallel execution for the inactive user query phase, default value: 4
-- batchSize  - the size of individual batches, default value: 20
+- batchSize - the size of individual batches, default value: 20
+- dryRun - whether the execution should run as a simulation without actually deauthorising users, default: false
 
 Note that the actual bulk-deauthorisation work will be done in single-threaded batches to avoid conflicts and inconsistent state in the Alfresco AuthorisationService, which has been found in practice to not behave properly in a highly concurrent scenario.
 
@@ -30,6 +34,24 @@ By default, the web script will use the exact same configuration as the inactive
 If none of the date-related configuration properties are set to a valid constellation, the date of the audit entries will be used as input to the report of the web scripts.
 
 Reports are provided in JSON or CSV format, with JSON being the default if a specific format is not reqeusted by using the URL parameter _?format=xxx_ or adding a file extension to the URL.
+
+#### Deauthorisation via job
+The Repository-tier Quartz job _acosix-deauth-DeauthoriseInactiveUsersJobTrigger_ may be used to periodically run the same deauthorisation logic as the above web script to deauthorise inactive users.
+
+By default, the job will use the exact same configuration as the inactive user deauthorisation web script. All configuration properties share the same prefix of _acosix-deauth.job.deauthoriseInactiveUser._. The following properties are supported:
+
+- _cron_ - the CRON expression defining the schedule of the job, default: \* \* \* \* \* ? 2099
+- _dryRun_ - whether the execution should run as a simulation without actually deauthorising users, default: true
+- _auditApplicationName_ - the name of the audit application to use (default: _acosix-audit-activeUsers_)
+- _auditApplicationName_ - the name of the audit application to use (default: _acosix-audit-activeUsers_)
+- _userAuditPath_ - the path to the user name within the audit data to filter queries against; if empty, the user name associated with the audit entry will be used to query
+- _dateFromAuditPath_ - the path to a date or ISO 8601 string value within the audit data that denotes the start of a timeframe in which the user was active; must be set together with _dateToAuditPath_ (default: _/acosix-audit-activeUsers/timeframeStart_)
+- _dateToAuditPath_ - the path to a date or ISO 8601 string value within the audit data that denotes the end of a timeframe in which the user was active; must be set together with _dateFromAuditPath_ (default: _/acosix-audit-activeUsers/timeframeEnd_)
+- _dateAuditPath_ - the path to a date or ISO 8601 string value within the audit data that denotes an effective date at which the user was active
+
+If none of the date-related configuration properties are set to a valid constellation, the date of the audit entries will be used as input to the report of the web scripts.
+
+**Note**: The job is disabled as well as set to _dryRun_-mode by default. This is to avoid accidental deauthorisation of all users should this module be installed without sufficient audit data to actually back the logic. An Alfresco administrator must explicitly enable this job and/or remove the _dryRun_-mode once they are confident it can work correctly with the data available. 
 
 # Maven usage
 

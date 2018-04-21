@@ -1,4 +1,4 @@
-<#-- 
+/*
  * Copyright 2017, 2018 Acosix GmbH
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,8 +12,16 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
-  -->
- <#compress>
-"userName","firstName","lastName","email"<#list users as inactiveUser><#if inactiveUser.info.deauthorised?? && inactiveUser.info.deauthorised>
-"${inactiveUser.node.properties.userName}","${(inactiveUser.node.properties.firstName!"")?replace("\"", "\"\"")}","${(inactiveUser.node.properties.lastName!"")?replace("\"", "\"\"")}","${(inactiveUser.node.properties.email!"")?replace("\"", "\"\"")}"</#if></#list>
-</#compress>
+ */
+package de.acosix.alfresco.deauth.repo;
+
+
+/**
+ * @author Axel Faust
+ */
+public interface DeauthModuleConstants
+{
+
+    String SERVICE_NAMESPACE = "http://acosix.org/alfresco-deauth/service";
+
+}

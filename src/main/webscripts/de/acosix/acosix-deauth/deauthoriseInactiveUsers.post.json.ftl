@@ -1,5 +1,5 @@
 <#-- 
- * Copyright 2017 Acosix GmbH
+ * Copyright 2017, 2018 Acosix GmbH
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,7 @@
     "authorisedBefore": "${authorisedUsersBefore?c}",
     "authorisedAfter": "${authorisedUsersAfter?c}",
     "count" : ${deauthorised?c},
-    "users": [<#list users as inactiveUser><#if inactiveUser.deauthorised?? && inactiveUser.deauthorised>
+    "users": [<#list users as inactiveUser><#if inactiveUser.info.deauthorised?? && inactiveUser.info.deauthorised>
         <#if !first>,</#if>{
             "userName": "${inactiveUser.node.properties.userName}",
             "firstName": "${inactiveUser.node.properties.firstName!""}",
