@@ -24,13 +24,11 @@
                 <entry key="authorisationService" value-ref="AuthorizationService" />
 
                 <entry key="dryRun" value="\${${moduleId}.job.deauthoriseInactiveUser.dryRun}" />
-                <entry key="lookBackMode" value="\${${moduleId}.job.deauthoriseInactiveUser.defaultLookBackMode}" />
-                <entry key="lookBackDays" value="\${${moduleId}.job.deauthoriseInactiveUser.defaultLookBackDays}" />
-                <entry key="lookBackMonths" value="\${${moduleId}.job.deauthoriseInactiveUser.defaultLookBackMonths}" />
-                <entry key="lookBackYears" value="\${${moduleId}.job.deauthoriseInactiveUser.defaultLookBackYears}" />
-                <entry key="workerThreads" value="\${${moduleId}.job.deauthoriseInactiveUser.defaultWorkerThreads}" />
-                <entry key="batchSize" value="\${${moduleId}.job.deauthoriseInactiveUser.defaultBatchSize}" />
-                <entry key="loggingInterval" value="\${${moduleId}.job.deauthoriseInactiveUser.defaultLoggingInterval}" />
+                <entry key="lookBackMode" value="\${${moduleId}.job.deauthoriseInactiveUser.lookBackMode}" />
+                <entry key="lookBackAmount" value="\${${moduleId}.job.deauthoriseInactiveUser.lookBackAmount}" />
+                <entry key="workerThreads" value="\${${moduleId}.job.deauthoriseInactiveUser.workerThreads}" />
+                <entry key="batchSize" value="\${${moduleId}.job.deauthoriseInactiveUser.batchSize}" />
+                <entry key="loggingInterval" value="\${${moduleId}.job.deauthoriseInactiveUser.loggingInterval}" />
 
                 <entry key="auditApplicationName" value="\${${moduleId}.job.deauthoriseInactiveUser.auditApplicationName}" />
                 <entry key="userAuditPath" value="\${${moduleId}.job.deauthoriseInactiveUser.userAuditPath}" />
