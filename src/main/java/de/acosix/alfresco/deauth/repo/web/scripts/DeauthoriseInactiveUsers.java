@@ -16,6 +16,8 @@
 package de.acosix.alfresco.deauth.repo.web.scripts;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -24,13 +26,17 @@ import org.alfresco.repo.batch.BatchProcessor;
 import org.alfresco.service.cmr.security.AuthorityService;
 import org.alfresco.util.PropertyCheck;
 import org.apache.commons.logging.LogFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.extensions.webscripts.Cache;
 import org.springframework.extensions.webscripts.Status;
 import org.springframework.extensions.webscripts.WebScriptRequest;
 
 import de.acosix.alfresco.audit.repo.batch.AuditUserInfo;
 import de.acosix.alfresco.audit.repo.batch.AuditUserInfo.AuthorisedState;
-import de.acosix.alfresco.audit.repo.web.scripts.AuditUserGet;
+import de.acosix.alfresco.audit.repo.batch.PersonAuditWorker;
+import de.acosix.alfresco.audit.repo.batch.PersonAuditWorker.PersonAuditQueryMode;
+import de.acosix.alfresco.audit.repo.web.scripts.AbstractAuditUserWebScript;
 import de.acosix.alfresco.deauth.repo.batch.DeauthorisationUserInfo;
 import de.acosix.alfresco.deauth.repo.batch.PersonDeauthorisationWorker;
 import de.acosix.alfresco.utility.repo.batch.CollectionWrappingWorkProvider;
@@ -42,14 +48,65 @@ import de.acosix.alfresco.utility.repo.batch.CollectionWrappingWorkProvider;
  *
  * @author Axel Faust
  */
-public class DeauthoriseInactiveUsers extends AuditUserGet
+public class DeauthoriseInactiveUsers extends AbstractAuditUserWebScript
 {
 
+    protected static class DeauthoriseInactiveUsersParameters extends AuditUserWebScriptParameters
     {
-        super.setQueryActiveUsers(false);
+
+        private boolean dryRun = false;
+
+        /**
+         * @return the dryRun
+         */
+        public boolean isDryRun()
+        {
+            return this.dryRun;
+        }
+
+        /**
+         * @param dryRun
+         *            the dryRun to set
+         */
+        public void setDryRun(final boolean dryRun)
+        {
+            this.dryRun = dryRun;
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        @Override
+        public String toString()
+        {
+            final StringBuilder builder = new StringBuilder();
+            builder.append("DeauthoriseInactiveUsersParameters [dryRun=");
+            builder.append(this.dryRun);
+            builder.append(", ");
+            if (this.getLookBackMode() != null)
+            {
+                builder.append("getLookBackMode()=");
+                builder.append(this.getLookBackMode());
+                builder.append(", ");
+            }
+            builder.append("getLookBackAmount()=");
+            builder.append(this.getLookBackAmount());
+            builder.append(", getFromTime()=");
+            builder.append(this.getFromTime());
+            builder.append(", getWorkerThreads()=");
+            builder.append(this.getWorkerThreads());
+            builder.append(", getBatchSize()=");
+            builder.append(this.getBatchSize());
+            builder.append("]");
+            return builder.toString();
+        }
     }
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(DeauthoriseInactiveUsers.class);
+
     protected AuthorityService authorityService;
+
+    protected AuthorizationService authorisationService;
 
     /**
      *
@@ -61,17 +118,6 @@ public class DeauthoriseInactiveUsers extends AuditUserGet
         super.afterPropertiesSet();
         PropertyCheck.mandatory(this, "authorityService", this.authorityService);
         PropertyCheck.mandatory(this, "authorisationService", this.authorisationService);
-    }
-
-    /**
-     *
-     * {@inheritDoc}
-     */
-    @Override
-    public void setQueryActiveUsers(final boolean queryActiveUsers)
-    {
-        throw new UnsupportedOperationException(
-                "queryActiveUsers cannot be modified - " + this.getClass().getName() + " always queries inactive users");
     }
 
     /**
@@ -89,7 +135,7 @@ public class DeauthoriseInactiveUsers extends AuditUserGet
      */
     public void setAuthorisationService(final AuthorizationService authorisationService)
     {
-        this.setAuthorisationService((Object) authorisationService);
+        this.authorisationService = authorisationService;
     }
 
     /**
@@ -98,70 +144,60 @@ public class DeauthoriseInactiveUsers extends AuditUserGet
     @Override
     protected Map<String, Object> executeImpl(final WebScriptRequest req, final Status status, final Cache cache)
     {
-        final String dryRunParam = req.getParameter("dryRun");
-        final boolean dryRun = Boolean.parseBoolean(dryRunParam);
-
-        final Map<String, Object> model = super.executeImpl(req, status, cache);
-        final Object users = model.get("users");
-
-        // some validation of our expectations
-        if (!(users instanceof List<?>))
+        Map<String, Object> model = super.executeImpl(req, status, cache);
+        if (model == null)
         {
-            throw new IllegalStateException("Model of base class web script contains an unexpected value for \"users\"");
+            model = new HashMap<>();
         }
 
-        final List<DeauthorisationUserInfo> work = new ArrayList<>();
-        ((List<?>) users).forEach(userEntry -> {
-            if (!(userEntry instanceof Map<?, ?>))
-            {
-                throw new IllegalStateException("Model of base class web script contains an unexpected value as element of \"users\"");
-            }
-            final Object info = ((Map<?, ?>) userEntry).get("info");
-            if (!(info instanceof AuditUserInfo))
-            {
-                throw new IllegalStateException(
-                        "Model of base class web script contains an unexpected value as \"info\" on element of \"users\"");
-            }
+        final DeauthoriseInactiveUsersParameters parameters = this.parseRequest(() -> {
+            final DeauthoriseInactiveUsersParameters params = new DeauthoriseInactiveUsersParameters();
 
-            final DeauthorisationUserInfo workInfo = new DeauthorisationUserInfo((AuditUserInfo) info);
-            if (workInfo.getAuditUserInfo().getAuthorisedState() == AuthorisedState.AUTHORISED)
+            final String dryRunParam = req.getParameter("dryRun");
+            final boolean dryRun = Boolean.parseBoolean(dryRunParam);
+            params.setDryRun(dryRun);
+
+            return params;
+        }, req);
+
+        final List<AuditUserInfo> auditUsers = this.queryAuditUsers(PersonAuditQueryMode.INACTIVE_ONLY, parameters);
+
+        LOGGER.debug("Query for inactive users using {} yielded {} results", "inactive", parameters, auditUsers.size());
+
+        final List<DeauthorisationUserInfo> work = new ArrayList<>();
+
+        final List<Object> modelUsers = new ArrayList<>();
+        model.put("users", modelUsers);
+        auditUsers.forEach(userInfo -> {
+            if (userInfo.getAuthorisedState() == AuthorisedState.AUTHORISED)
             {
+                final DeauthorisationUserInfo workInfo = new DeauthorisationUserInfo(userInfo);
                 work.add(workInfo);
             }
 
-            @SuppressWarnings("unchecked")
-            final Map<Object, Object> userModel = (Map<Object, Object>) userEntry;
-            userModel.put("info", workInfo);
+            final Map<String, Object> modelInactiveUser = new HashMap<>();
+            modelInactiveUser.put("info", userInfo);
+            modelInactiveUser.put("node", userInfo.getPersonRef());
+            modelUsers.add(modelInactiveUser);
         });
-
+        LOGGER.debug("Filtered inactive users to {} which have been authorised", work.size());
         // can use the current transaction for the "before" count
-        final long authorizedUsersCount = ((AuthorizationService) this.authorisationService).getAuthorizedUsersCount();
+        final long authorizedUsersCount = this.authorisationService.getAuthorizedUsersCount();
         model.put("authorisedUsersBefore", Long.valueOf(authorizedUsersCount));
 
-        // though deauthorising a user should be a simple operation and not require changes affecting nodes, we still do it in batches
-        final PersonDeauthorisationWorker personDeauthorisationWorker = new PersonDeauthorisationWorker(dryRun, this.authorityService,
-                (AuthorizationService) this.authorisationService);
+        final int deauthorised = this.runDeauthorisation(work, parameters);
 
-        if (!work.isEmpty())
-        {
-            // needs to run single-threaded to try and avoid issues with authorisationService
-            // (observed quite a lot of update conflicts and inconsistent state in multi-threaded updates)
-            final BatchProcessor<DeauthorisationUserInfo> processor = new BatchProcessor<>("DeauthoriseInactiveUsers",
-                    this.transactionService.getRetryingTransactionHelper(), new CollectionWrappingWorkProvider<>(work, 1), 1,
-                    this.batchSize, null, LogFactory.getLog(DeauthoriseInactiveUsers.class), this.loggingInterval);
-            processor.process(personDeauthorisationWorker, true);
-        }
+        LOGGER.trace("User details after processing: {}", work);
 
-        final int deauthorised = personDeauthorisationWorker.getDeauthorised();
         model.put("deauthorised", Integer.valueOf(deauthorised));
-        if (!dryRun)
+        if (!parameters.isDryRun())
         {
             // need nested transaction for an "after" count
-            this.transactionService.getRetryingTransactionHelper().doInTransaction(() -> {
-                final long authorizedUsersCount2 = ((AuthorizationService) this.authorisationService).getAuthorizedUsersCount();
-                model.put("authorisedUsersAfter", Long.valueOf(authorizedUsersCount2));
-                return null;
+            final Long authorizedUsersCount2 = this.transactionService.getRetryingTransactionHelper().doInTransaction(() -> {
+                final long authorizedUsersCount3 = this.authorisationService.getAuthorizedUsersCount();
+                return Long.valueOf(authorizedUsersCount3);
             }, true, true);
+            model.put("authorisedUsersAfter", authorizedUsersCount2);
         }
         else
         {
@@ -169,5 +205,47 @@ public class DeauthoriseInactiveUsers extends AuditUserGet
         }
 
         return model;
+    }
+
+    protected <T extends DeauthoriseInactiveUsersParameters> int runDeauthorisation(final Collection<DeauthorisationUserInfo> work,
+            final T parameters)
+    {
+        // though deauthorising a user should be a simple operation and not require changes affecting nodes, we still do it in batches
+        final PersonDeauthorisationWorker personDeauthorisationWorker = new PersonDeauthorisationWorker(parameters.isDryRun(),
+                this.authorityService, this.authorisationService);
+
+        if (!work.isEmpty())
+        {
+            // needs to run single-threaded to try and avoid issues with authorisationService
+            // (observed quite a lot of update conflicts and inconsistent state in multi-threaded updates)
+            final BatchProcessor<DeauthorisationUserInfo> processor = new BatchProcessor<>("DeauthoriseInactiveUsers",
+                    this.transactionService.getRetryingTransactionHelper(), new CollectionWrappingWorkProvider<>(work, 1), 1,
+                    parameters.getBatchSize(), null, LogFactory.getLog(this.getClass().getName() + ".batchProcessor"),
+                    this.loggingInterval);
+            processor.process(personDeauthorisationWorker, true);
+        }
+
+        final int deauthorised = personDeauthorisationWorker.getDeauthorised();
+        return deauthorised;
+    }
+
+    /**
+     *
+     * {@inheritDoc}
+     */
+    @Override
+    protected <T extends AuditUserWebScriptParameters> PersonAuditWorker createBatchWorker(final PersonAuditQueryMode mode,
+            final T parameters)
+    {
+        final PersonAuditWorker personAuditWorker = super.createBatchWorker(mode, parameters);
+
+        personAuditWorker.setIsAuthorisedCheck(userName -> {
+            return this.authorisationService.isAuthorized(userName);
+        });
+        personAuditWorker.setIsDeauthorisedCheck(userName -> {
+            return this.authorisationService.isDeauthorized(userName);
+        });
+
+        return personAuditWorker;
     }
 }

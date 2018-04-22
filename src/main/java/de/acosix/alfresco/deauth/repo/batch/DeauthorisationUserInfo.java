@@ -60,4 +60,24 @@ public class DeauthorisationUserInfo
         return this.auditUserInfo;
     }
 
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public String toString()
+    {
+        final StringBuilder builder = new StringBuilder();
+        builder.append("DeauthorisationUserInfo [");
+        if (this.auditUserInfo != null)
+        {
+            builder.append("auditUserInfo=");
+            builder.append(this.auditUserInfo);
+            builder.append(", ");
+        }
+        builder.append("deauthorised=");
+        builder.append(this.deauthorised);
+        builder.append("]");
+        return builder.toString();
+    }
+
 }

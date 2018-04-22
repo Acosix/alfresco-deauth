@@ -294,7 +294,7 @@ public class DeauthoriseInactiveUsersJob implements Job
         final BatchProcessor<NodeRef> processor = new BatchProcessor<>(AuditUserGet.class.getName(),
                 transactionService.getRetryingTransactionHelper(),
                 new PersonBatchWorkProvider(namespaceService, nodeService, personService, searchService), workerThreads, batchSize, null,
-                LogFactory.getLog(AuditUserGet.class), loggingInterval);
+                LogFactory.getLog(this.getClass().getName() + ".batchProcessor"), loggingInterval);
 
         processor.process(personAuditWorker, true);
 
