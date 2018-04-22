@@ -89,13 +89,13 @@ public class DeauthoriseInactiveUsers extends AbstractAuditUserWebScript
                 builder.append(this.getLookBackMode());
                 builder.append(", ");
             }
-            builder.append("getLookBackAmount()=");
+            builder.append("lookBackAmount=");
             builder.append(this.getLookBackAmount());
-            builder.append(", getFromTime()=");
+            builder.append(", fromTime=");
             builder.append(this.getFromTime());
-            builder.append(", getWorkerThreads()=");
+            builder.append(", workerThreads=");
             builder.append(this.getWorkerThreads());
-            builder.append(", getBatchSize()=");
+            builder.append(", batchSize=");
             builder.append(this.getBatchSize());
             builder.append("]");
             return builder.toString();
@@ -173,20 +173,21 @@ public class DeauthoriseInactiveUsers extends AbstractAuditUserWebScript
             {
                 final DeauthorisationUserInfo workInfo = new DeauthorisationUserInfo(userInfo);
                 work.add(workInfo);
-            }
 
-            final Map<String, Object> modelInactiveUser = new HashMap<>();
-            modelInactiveUser.put("info", userInfo);
-            modelInactiveUser.put("node", userInfo.getPersonRef());
-            modelUsers.add(modelInactiveUser);
+                final Map<String, Object> modelInactiveUser = new HashMap<>();
+                modelInactiveUser.put("info", workInfo);
+                modelInactiveUser.put("node", userInfo.getPersonRef());
+                modelUsers.add(modelInactiveUser);
+            }
         });
-        LOGGER.debug("Filtered inactive users to {} which have been authorised", work.size());
+        LOGGER.debug("Filtered inactive users to {} which are currently authorised", work.size());
         // can use the current transaction for the "before" count
         final long authorizedUsersCount = this.authorisationService.getAuthorizedUsersCount();
         model.put("authorisedUsersBefore", Long.valueOf(authorizedUsersCount));
 
         final int deauthorised = this.runDeauthorisation(work, parameters);
 
+        LOGGER.debug("Deauthorised {} inactive users", deauthorised);
         LOGGER.trace("User details after processing: {}", work);
 
         model.put("deauthorised", Integer.valueOf(deauthorised));
