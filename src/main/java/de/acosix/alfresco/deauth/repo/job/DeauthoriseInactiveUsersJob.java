@@ -46,11 +46,9 @@ import de.acosix.alfresco.audit.repo.batch.AuditUserInfo;
 import de.acosix.alfresco.audit.repo.batch.AuditUserInfo.AuthorisedState;
 import de.acosix.alfresco.audit.repo.batch.PersonAuditWorker;
 import de.acosix.alfresco.audit.repo.batch.PersonAuditWorker.PersonAuditQueryMode;
-import de.acosix.alfresco.audit.repo.web.scripts.AuditUserGet;
 import de.acosix.alfresco.deauth.repo.DeauthModuleConstants;
 import de.acosix.alfresco.deauth.repo.batch.DeauthorisationUserInfo;
 import de.acosix.alfresco.deauth.repo.batch.PersonDeauthorisationWorker;
-import de.acosix.alfresco.deauth.repo.web.scripts.DeauthoriseInactiveUsers;
 import de.acosix.alfresco.utility.repo.batch.CollectionWrappingWorkProvider;
 import de.acosix.alfresco.utility.repo.batch.PersonBatchWorkProvider;
 import de.acosix.alfresco.utility.repo.job.JobUtilities;
@@ -195,7 +193,7 @@ public class DeauthoriseInactiveUsersJob implements Job
         // (observed quite a lot of update conflicts and inconsistent state in multi-threaded updates)
         final BatchProcessor<DeauthorisationUserInfo> processor = new BatchProcessor<>("DeauthoriseInactiveUsers",
                 transactionService.getRetryingTransactionHelper(), new CollectionWrappingWorkProvider<>(work, 1), 1, batchSize, null,
-                LogFactory.getLog(DeauthoriseInactiveUsers.class), loggingInterval);
+                LogFactory.getLog(this.getClass().getName() + ".batchProcessor"), loggingInterval);
         processor.process(personDeauthorisationWorker, true);
 
         final int deauthorised = personDeauthorisationWorker.getDeauthorised();
@@ -291,7 +289,7 @@ public class DeauthoriseInactiveUsersJob implements Job
             return Boolean.valueOf(deauthorized);
         });
 
-        final BatchProcessor<NodeRef> processor = new BatchProcessor<>(AuditUserGet.class.getName(),
+        final BatchProcessor<NodeRef> processor = new BatchProcessor<>("DeauthoriseInactiveUsers-PreparationQuery",
                 transactionService.getRetryingTransactionHelper(),
                 new PersonBatchWorkProvider(namespaceService, nodeService, personService, searchService), workerThreads, batchSize, null,
                 LogFactory.getLog(this.getClass().getName() + ".batchProcessor"), loggingInterval);
