@@ -23,6 +23,7 @@ import java.util.Map;
 
 import org.alfresco.enterprise.repo.authorization.AuthorizationService;
 import org.alfresco.repo.batch.BatchProcessor;
+import org.alfresco.repo.security.authentication.AuthenticationUtil;
 import org.alfresco.service.cmr.security.AuthorityService;
 import org.alfresco.util.PropertyCheck;
 import org.apache.commons.logging.LogFactory;
@@ -48,7 +49,7 @@ import de.acosix.alfresco.utility.repo.batch.CollectionWrappingWorkProvider;
  *
  * @author Axel Faust
  */
-public class DeauthoriseInactiveUsers extends AbstractAuditUserWebScript
+public class DeauthoriseInactiveUsersPost extends AbstractAuditUserWebScript
 {
 
     protected static class DeauthoriseInactiveUsersParameters extends AuditUserWebScriptParameters
@@ -102,7 +103,7 @@ public class DeauthoriseInactiveUsers extends AbstractAuditUserWebScript
         }
     }
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(DeauthoriseInactiveUsers.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(DeauthoriseInactiveUsersPost.class);
 
     protected AuthorityService authorityService;
 
@@ -211,23 +212,27 @@ public class DeauthoriseInactiveUsers extends AbstractAuditUserWebScript
     protected <T extends DeauthoriseInactiveUsersParameters> int runDeauthorisation(final Collection<DeauthorisationUserInfo> work,
             final T parameters)
     {
-        // though deauthorising a user should be a simple operation and not require changes affecting nodes, we still do it in batches
-        final PersonDeauthorisationWorker personDeauthorisationWorker = new PersonDeauthorisationWorker(parameters.isDryRun(),
-                this.authorityService, this.authorisationService);
+        // can run as system as web script requires admin authentication
+        // improves performance and may avoid overwhelming readersCache, readersDeniedCache and others
+        return AuthenticationUtil.runAsSystem(() -> {
+            // though deauthorising a user should be a simple operation and not require changes affecting nodes, we still do it in batches
+            final PersonDeauthorisationWorker personDeauthorisationWorker = new PersonDeauthorisationWorker(parameters.isDryRun(),
+                    this.authorityService, this.authorisationService);
 
-        if (!work.isEmpty())
-        {
-            // needs to run single-threaded to try and avoid issues with authorisationService
-            // (observed quite a lot of update conflicts and inconsistent state in multi-threaded updates)
-            final BatchProcessor<DeauthorisationUserInfo> processor = new BatchProcessor<>("DeauthoriseInactiveUsers",
-                    this.transactionService.getRetryingTransactionHelper(), new CollectionWrappingWorkProvider<>(work, 1), 1,
-                    parameters.getBatchSize(), null, LogFactory.getLog(this.getClass().getName() + ".batchProcessor"),
-                    this.loggingInterval);
-            processor.process(personDeauthorisationWorker, true);
-        }
+            if (!work.isEmpty())
+            {
+                // needs to run single-threaded to try and avoid issues with authorisationService
+                // (observed quite a lot of update conflicts and inconsistent state in multi-threaded updates)
+                final BatchProcessor<DeauthorisationUserInfo> processor = new BatchProcessor<>("DeauthoriseInactiveUsers",
+                        this.transactionService.getRetryingTransactionHelper(), new CollectionWrappingWorkProvider<>(work, 1), 1,
+                        parameters.getBatchSize(), null, LogFactory.getLog(this.getClass().getName() + ".batchProcessor"),
+                        this.loggingInterval);
+                processor.process(personDeauthorisationWorker, true);
+            }
 
-        final int deauthorised = personDeauthorisationWorker.getDeauthorised();
-        return deauthorised;
+            final int deauthorised = personDeauthorisationWorker.getDeauthorised();
+            return deauthorised;
+        });
     }
 
     /**
