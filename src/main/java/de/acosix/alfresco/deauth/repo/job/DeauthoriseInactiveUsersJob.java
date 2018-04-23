@@ -213,19 +213,23 @@ public class DeauthoriseInactiveUsersJob implements Job
         final String lookBackAmountParam = JobUtilities.getJobDataValue(context, "lookBackAmount", String.class, true);
 
         final String auditApplicationName = JobUtilities.getJobDataValue(context, "auditApplicationName", String.class);
-        final String userAuditPath = JobUtilities.getJobDataValue(context, "userAuditPath", String.class, true);
-        final String dateAuditPath = JobUtilities.getJobDataValue(context, "dateAuditPath", String.class, true);
-        final String dateFromAuditPath = JobUtilities.getJobDataValue(context, "dateFromAuditPath", String.class, true);
-        final String dateToAuditPath = JobUtilities.getJobDataValue(context, "dateToAuditPath", String.class, true);
+        String userAuditPath = JobUtilities.getJobDataValue(context, "userAuditPath", String.class, true);
+        String dateAuditPath = JobUtilities.getJobDataValue(context, "dateAuditPath", String.class, true);
+        String dateFromAuditPath = JobUtilities.getJobDataValue(context, "dateFromAuditPath", String.class, true);
+        String dateToAuditPath = JobUtilities.getJobDataValue(context, "dateToAuditPath", String.class, true);
+        userAuditPath = userAuditPath != null && !userAuditPath.trim().isEmpty() ? userAuditPath : null;
+        dateAuditPath = dateAuditPath != null && !dateAuditPath.trim().isEmpty() ? dateAuditPath : null;
+        dateFromAuditPath = dateFromAuditPath != null && !dateFromAuditPath.trim().isEmpty() ? dateFromAuditPath : null;
+        dateToAuditPath = dateToAuditPath != null && !dateToAuditPath.trim().isEmpty() ? dateToAuditPath : null;
 
         LookBackMode lookBackMode = LookBackMode.MONTHS;
-        if (lookBackModeParam != null)
+        if (lookBackModeParam != null && !lookBackModeParam.trim().isEmpty())
         {
             lookBackMode = LookBackMode.valueOf(lookBackModeParam.toUpperCase(Locale.ENGLISH));
         }
 
         int lookBackAmount;
-        if (lookBackAmountParam != null)
+        if (lookBackAmountParam != null && !lookBackAmountParam.trim().isEmpty())
         {
             lookBackAmount = Integer.parseInt(lookBackAmountParam, 10);
             if (lookBackAmount <= 0)
